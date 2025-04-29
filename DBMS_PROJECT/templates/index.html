@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Player and Team Statistics</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<style>
+    /* Body styling with background gradient */
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #6a11cb, #2575fc); /* Gradient background */
+        color: #fff;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    /* Container to center content */
+    .container {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 40px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 500px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Header styling */
+    h1 {
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    /* Form group styling */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    /* Label styling */
+    label {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    /* Input and select field styling */
+    input[type="text"], select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        margin-top: 8px;
+        box-sizing: border-box;
+    }
+
+    /* Styled dropdown select */
+    select {
+        background-color: #fff;
+        color: #333;
+    }
+
+    /* Button styling */
+    button {
+        padding: 12px;
+        background-color: #2575fc;
+        color: white;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    button:hover {
+        background-color: #1f63d1;
+    }
+
+    /* Results section styling */
+    .results {
+        margin-top: 30px;
+        display: none; /* Hide results initially */
+        z-index: -1;
+    }
+
+    .results h2 {
+        text-align: center;
+        color: #333;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    ul li {
+        background-color: #fff;
+        margin-bottom: 12px;
+        padding: 12px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    strong {
+        color: #333;
+        font-weight: 600;
+    }
+</style>
+<body>
+    <div class="container">
+        <h1>Search Player or Team Statistics</h1>
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="search_type">Search for:</label>
+                <select name="search_type" id="search_type" required>
+                    <option value="player">Player</option>
+                    <option value="team">Team</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="name">Enter Name:</label>
+                <input type="text" id="name" name="name" required autocomplete="off" list="name_suggestions">
+                <datalist id="name_suggestions">
+                    <!-- Options will be dynamically filled using JS -->
+                </datalist>
+            </div>
+
+            <button type="submit">Search</button>
+        </form>
+
+        {% if stats %}
+        <div class="results">
+            <h2>Results:</h2>
+            <ul>
+                {% for key, value in stats.items() %}
+                    <li><strong>{{ key }}:</strong> <strong>{{ value }}</strong></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+<script>
+    const input = document.getElementById('name');
+    const datalist = document.getElementById('name_suggestions');
+    const searchType = document.getElementById('search_type');
+    const resultsDiv = document.querySelector('.results');
+
+    // Get player names and team names separately from backend
+    const playerNames = {{ player_names | tojson }};
+    const teamNames = {{ team_names | tojson }};
+
+    let currentOptions = playerNames; // Default on page load
+
+    function updateDatalist(search) {
+        datalist.innerHTML = '';
+        if (search.length >= 1) {
+            const filtered = currentOptions.filter(opt => opt.toLowerCase().includes(search));
+            filtered.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item;
+                datalist.appendChild(option);
+            });
+        }
+    }
+
+    input.addEventListener('input', function() {
+        const search = this.value.toLowerCase();
+        updateDatalist(search);
+    });
+
+    searchType.addEventListener('change', function() {
+        const type = this.value;
+        if (type === 'player') {
+            currentOptions = playerNames;
+        } else if (type === 'team') {
+            currentOptions = teamNames;
+        }
+        updateDatalist(input.value.toLowerCase());
+    });
+
+    // Initial load
+    updateDatalist('');
+
+    // Show results only after the user clicks Search, check the has_stats flag
+    if ({{ has_stats | tojson }}) {
+        resultsDiv.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
